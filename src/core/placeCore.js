@@ -2,6 +2,8 @@ const fs = require('fs')
 const _ = require('lodash')
 const BPromise = require('bluebird')
 const path = require('path')
+const gm = require('gm')
+const PerspT = require('perspective-transform')
 const sharp = require('sharp')
 const placementGuideCore = require('./placementGuideCore')
 
@@ -43,6 +45,31 @@ function getImageMetadata(image) {
 async function _render(imageId, imageToPlace) {
   const placementMetadata = await getImageMetadata(imageToPlace)
   const imageInfo = images[imageId]
+
+  const srcCorners = [0, 0, placementMetadata.width - 1, 0, placementMetadata.width - 1, placementMetadata.height - 1, 0, placementMetadata.height - 1]
+  const dstCorners = [
+    imageInfo.placement.topLeft.x,
+    imageInfo.placement.topLeft.y,
+    imageInfo.placement.topRight.x,
+    imageInfo.placement.topRight.y,
+    imageInfo.placement.bottomRight.x,
+    imageInfo.placement.bottomRight.y,
+    imageInfo.placement.bottomLeft.x,
+    imageInfo.placement.bottomLeft.y,
+  ]
+  console.log(srcCorners, dstCorners)
+  const perspT = PerspT(srcCorners, dstCorners)
+  console.log('perspT', perspT.coeffs.join(','))
+
+  gm(imageToPlace, 'image.jpg').write('test.png', function (err) {
+    if (!err) console.log('done');
+  });
+
+  /*gm(imageToPlace, 'image.jpg').affine(perspT.coeffs.join(',')).transform().write('test.png', function (err) {
+    if (!err) console.log('done');
+  });
+  */
+
 
   const resizedImageToPlace = await _resize(imageToPlace, { resizeToWidth: 800 })
   const resizedMeta = await getImageMetadata(resizedImageToPlace)
