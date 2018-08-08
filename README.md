@@ -1,11 +1,11 @@
-# alvarcarto-g-proxy
+# alvarcarto-placement-service
 
-> Google authentication for internal services
+> Place-it image service
+
 
 ## Get started
 
 1. Install node environment
-1. Follow instructions in https://github.com/bitly/oauth2_proxy to create Google OAuth2 client id and secret
 1. `npm i`
 1. `cp .env.sample .env` and fill the blanks
 1. `npm start`
