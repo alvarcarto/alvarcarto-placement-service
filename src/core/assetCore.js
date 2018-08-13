@@ -82,7 +82,7 @@ function getImageMetadata(image) {
 
 function getListOfS3Assets() {
   // TODO: implement
-  return BPromise.resolve([{ id: 'aarnes-home-table' }])
+  return BPromise.resolve([{ id: 'aarnes-home-table', label: 'aarnes-home-table' }])
 }
 
 function getListOfLocalAssets() {
