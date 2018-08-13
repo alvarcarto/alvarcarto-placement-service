@@ -1,11 +1,6 @@
-const fs = require('fs')
 const path = require('path')
 const BPromise = require('bluebird')
 const Jimp = require('jimp')
-
-function getFilePath(relativePath) {
-  return path.join(__dirname, '../../', relativePath)
-}
 
 function filterPixels(jimpImage, filter) {
   const pixels = []

@@ -3,6 +3,7 @@
   "rules": {
     "semi": ["error", "never"],
     "no-console": "off",
+    "no-plusplus": "off",
     "arrow-body-style": "off",
     "function-paren-newline": ["error", "multiline"],
     "object-curly-newline": ["error", {
