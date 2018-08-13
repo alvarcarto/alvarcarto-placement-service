@@ -6,6 +6,7 @@ const ex = require('../util/express')
 const logger = require('../util/logger')(__filename)
 const posterCore = require('../core/posterCore')
 const placeCore = require('../core/placeCore')
+const assetCore = require('../core/assetCore')
 const ROLES = require('../enum/roles')
 
 BPromise.promisifyAll(fs)
@@ -93,7 +94,13 @@ const getPlaceMap = ex.createRoute(async (req, res) => {
   res.send(rendered.imageData)
 })
 
+const getImages = ex.createJsonRoute(async () => {
+  const images = await assetCore.getListOfAssets()
+  return images
+})
+
 module.exports = {
   getPlaceMap,
   getPlaceUrl,
+  getImages,
 }

@@ -80,6 +80,16 @@ function getImageMetadata(image) {
   return sharp(image).metadata()
 }
 
+function getListOfS3Assets() {
+  // TODO: implement
+  return BPromise.resolve([{ id: 'aarnes-home-table' }])
+}
+
+function getListOfLocalAssets() {
+  // TODO: implement
+  return BPromise.resolve([])
+}
+
 function findSuitableAssetDescription(assetInfo, opts = {}) {
   if (opts.minWidth) {
     const sortedW = _.sortBy(assetInfo.resizedImages, img => img.metadata.width)
@@ -154,6 +164,14 @@ async function getAsset(imageId, opts = {}) {
   return findSuitableAssetDescription(assetInfo, opts)
 }
 
+async function getListOfAssets() {
+  const listOfS3Assets = await getListOfS3Assets()
+  const listOfLocalAssets = await getListOfLocalAssets()
+  const allAssets = listOfS3Assets.concat(listOfLocalAssets)
+  return _.uniqBy(allAssets, a => a.id)
+}
+
 module.exports = {
   getAsset,
+  getListOfAssets,
 }

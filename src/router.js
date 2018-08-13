@@ -35,6 +35,8 @@ function createRouter() {
     return next()
   })
 
+  router.get('/api/images', place.getImages)
+
   const placeMapSchema = {
     query: {
       resizeToWidth: Joi.number().min(50).optional(),
