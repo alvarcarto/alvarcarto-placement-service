@@ -115,9 +115,11 @@ async function render(imageId, imageToPlace, _opts) {
   logger.debug(`Rendering image ${imageId}`)
   const image = await _render(imageId, imageToPlace, opts)
   const resizedImage = await _resize(image, opts)
+  const metadata = await getImageMetadata(resizedImage)
 
   return {
     imageData: resizedImage,
+    metadata,
     mimeType: 'image/png',
   }
 }

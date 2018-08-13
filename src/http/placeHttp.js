@@ -12,7 +12,7 @@ const ROLES = require('../enum/roles')
 BPromise.promisifyAll(fs)
 
 function getAttachmentName() {
-  return 'download'
+  return 'alvarcarto'
 }
 
 const getPlaceUrl = ex.createRoute(async (req, res) => {
@@ -41,9 +41,8 @@ const getPlaceUrl = ex.createRoute(async (req, res) => {
   })
 
   if (req.query.download) {
-    const name = getAttachmentName()
     const ext = mime.extension(rendered.mimeType)
-    res.set('content-disposition', `attachment filename=${name}.${ext}`)
+    res.set('content-disposition', `attachment; filename=${req.params.imageId}.${ext}`)
   }
 
   res.set('content-type', rendered.mimeType)
@@ -85,9 +84,10 @@ const getPlaceMap = ex.createRoute(async (req, res) => {
   })
 
   if (req.query.download) {
-    const name = getAttachmentName()
+    const header = req.query.labelHeader ? req.query.labelHeader.toLowerCase() : 'map'
+    const name = `${req.params.imageId}-${header}-${rendered.metadata.width}x${rendered.metadata.height}`
     const ext = mime.extension(rendered.mimeType)
-    res.set('content-disposition', `attachment filename=${name}.${ext}`)
+    res.set('content-disposition', `attachment; filename=${name}.${ext}`)
   }
 
   res.set('content-type', rendered.mimeType)
