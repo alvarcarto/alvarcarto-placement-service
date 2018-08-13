@@ -87,7 +87,7 @@ async function _render(imageId, imageToPlace, opts = {}) {
     highQuality: opts.highQuality,
   })
 
-  if (opts.onlyPlacementLayer) {
+  if (opts.onlyGuideLayer) {
     const onlyPlacementImage = await sharp(transformed)
       .png()
       .toBuffer()
