@@ -22,11 +22,11 @@ const getPlaceUrl = ex.createRoute(async (req, res) => {
   }
 
   if (isAnon) {
-    if (req.query.resizeToWidth && req.query.resizeToWidth > 1200) {
+    if (req.query.resizeToWidth && Number(req.query.resizeToWidth) > 1200) {
       ex.throwStatus(403, 'resizeToWidth must be <= 1200')
     }
 
-    if (req.query.resizeToHeight && req.query.resizeToHeight > 1200) {
+    if (req.query.resizeToHeight && Number(req.query.resizeToHeight) > 1200) {
       ex.throwStatus(403, 'resizeToHeight must be <= 1200')
     }
   }
@@ -35,8 +35,8 @@ const getPlaceUrl = ex.createRoute(async (req, res) => {
   const rendered = await placeCore.render(req.params.imageId, posterImage, {
     highQuality: !resizeDefined,
     onlyPlacementLayer: req.query.onlyPlacementLayer,
-    resizeToHeight: req.query.resizeToHeight,
-    resizeToWidth: req.query.resizeToWidth,
+    resizeToHeight: Number(req.query.resizeToHeight),
+    resizeToWidth: Number(req.query.resizeToWidth),
   })
 
   if (req.query.download) {
@@ -51,8 +51,19 @@ const getPlaceUrl = ex.createRoute(async (req, res) => {
 
 const getPlaceMap = ex.createRoute(async (req, res) => {
   const resizeDefined = _.has(req.query, 'resizeToWidth') || _.has(req.query, 'resizeToHeight')
-  if (!resizeDefined && _.get(req, 'user.role') !== ROLES.ADMIN) {
+  const isAnon = _.get(req, 'user.role') !== ROLES.ADMIN
+  if (!resizeDefined && isAnon) {
     ex.throwStatus(403, 'Anonymous requests must define a resize parameter.')
+  }
+
+  if (isAnon) {
+    if (req.query.resizeToWidth && Number(req.query.resizeToWidth) > 1200) {
+      ex.throwStatus(403, 'resizeToWidth must be <= 1200')
+    }
+
+    if (req.query.resizeToHeight && Number(req.query.resizeToHeight) > 1200) {
+      ex.throwStatus(403, 'resizeToHeight must be <= 1200')
+    }
   }
 
   const metadata = await placeCore.getMetadata(req.params.imageId)
