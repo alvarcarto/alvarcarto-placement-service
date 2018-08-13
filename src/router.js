@@ -8,6 +8,18 @@ const ROLES = require('./enum/roles')
 
 const validTokens = config.API_KEY.split(',')
 
+function _requireRole(role) {
+  return function middleware(req, res, next) {
+    if (_.get(req, 'user.role') !== role) {
+      const err = new Error('Unauthorized')
+      err.status = 401
+      return next(err)
+    }
+
+    return next()
+  }
+}
+
 function createRouter() {
   const router = express.Router()
 
@@ -25,11 +37,20 @@ function createRouter() {
 
   const placeMapSchema = {
     query: {
-      resizeToWidth: Joi.number().min(50).max(1200).optional(),
-      resizeToHeight: Joi.number().min(50).max(1200).optional(),
+      resizeToWidth: Joi.number().min(50).optional(),
+      resizeToHeight: Joi.number().min(50).optional(),
     },
   }
   router.get('/api/place-map/:imageId', validate(placeMapSchema), place.getPlaceMap)
+
+  const placeUrlSchema = {
+    query: {
+      resizeToWidth: Joi.number().min(50).optional(),
+      resizeToHeight: Joi.number().min(50).optional(),
+      url: Joi.string(),
+    },
+  }
+  router.get('/api/place-url/:imageId', _requireRole(ROLES.ADMIN), validate(placeUrlSchema), place.getPlaceUrl)
 
   return router
 }

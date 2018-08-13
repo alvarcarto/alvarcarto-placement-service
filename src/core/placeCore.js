@@ -61,7 +61,7 @@ function gmToBuffer(data) {
   })
 }
 
-async function perspectiveTransform(image, viewport, srcCorners, dstCorners) {
+async function perspectiveTransform(image, viewport, srcCorners, dstCorners, opts = {}) {
   // Syntax for Perspective transform string is a set of coordinates:
   // oldTopLeft newTopLeft oldBottomLeft newBottomLeft oldBottomRight newBottomRight oldTopRight newTopRight
   // Example: "0,0 350,2551 0,8267 976,3893 5905,8267 2874,3324 5905,0 1758,2271"
@@ -71,16 +71,19 @@ async function perspectiveTransform(image, viewport, srcCorners, dstCorners) {
   // https://www.imagemagick.org/script/command-line-options.php#distort
   const data = gm(image)
     .command('convert')
-    .out('-filter', 'point')
     .out('-virtual-pixel', 'white')
     .out('-define', `distort:viewport=${viewport.width}x${viewport.height}`)
     .out('-distort', 'Perspective', pointsString)
     .setFormat('PNG')
 
+  if (!opts.highQuality) {
+    data.out('-filter', 'point')
+  }
+
   return gmToBuffer(data)
 }
 
-async function _render(imageId, imageToPlace) {
+async function _render(imageId, imageToPlace, opts = {}) {
   const placementMetadata = await getImageMetadata(imageToPlace)
   const imageInfo = images[imageId]
   const srcCorners = [
@@ -97,9 +100,9 @@ async function _render(imageId, imageToPlace) {
   ]
 
   const imageMeta = await getImageMetadata(imageInfo.imageData)
-  const transformed = await perspectiveTransform(imageToPlace, imageMeta, srcCorners, dstCorners)
-
-  await sharp(transformed).toFile('output.png')
+  const transformed = await perspectiveTransform(imageToPlace, imageMeta, srcCorners, dstCorners, {
+    highQuality: opts.highQuality,
+  })
 
   const renderedImage = await sharp(transformed)
     .overlayWith(imageInfo.imageData, {
@@ -114,7 +117,9 @@ async function _render(imageId, imageToPlace) {
 }
 
 async function render(imageId, imageToPlace, _opts) {
-  const opts = _.merge({}, _opts)
+  const opts = _.merge({
+    highQuality: false,
+  }, _opts)
 
   const imageMeta = images[imageId]
   if (!imageMeta) {
@@ -123,7 +128,7 @@ async function render(imageId, imageToPlace, _opts) {
     throw err
   }
 
-  const image = await _render(imageId, imageToPlace)
+  const image = await _render(imageId, imageToPlace, opts)
   const resizedImage = await _resize(image, opts)
 
   return {
@@ -132,6 +137,23 @@ async function render(imageId, imageToPlace, _opts) {
   }
 }
 
+async function getMetadata(imageId) {
+  if (!_.has(images, imageId)) {
+    const err = new Error(`Image not found: ${imageId}`)
+    err.status = 404
+    throw err
+  }
+
+  if (images[imageId].metadata) {
+    return images[imageId].metadata
+  }
+
+  const metadata = await getImageMetadata(images[imageId].imageData)
+  images[imageId].metadata = metadata
+  return metadata
+}
+
 module.exports = {
   render,
+  getMetadata,
 }
