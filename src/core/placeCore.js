@@ -1,32 +1,11 @@
-const fs = require('fs')
 const _ = require('lodash')
 const BPromise = require('bluebird')
-const path = require('path')
 const gm = require('gm').subClass({ imageMagick: true })
 const sharp = require('sharp')
-const placementGuideCore = require('./placementGuideCore')
+const logger = require('../util/logger')(__filename)
+const assetCore = require('./assetCore')
 
 BPromise.promisifyAll(gm.prototype)
-
-function getFilePath(relativePath) {
-  return path.join(__dirname, '../../', relativePath)
-}
-
-const images = {
-  test: {
-    imageData: fs.readFileSync(getFilePath('./images/test.png')),
-  },
-}
-
-const placementIm = fs.readFileSync(getFilePath('./images/placement.png'))
-placementGuideCore.getPlacementData(placementIm)
-  .then((data) => {
-    images.test.placement = data
-  })
-  .catch((err) => {
-    throw err
-  })
-
 
 function _resize(image, opts) {
   const sharpImage = sharp(image)
@@ -84,8 +63,12 @@ async function perspectiveTransform(image, viewport, srcCorners, dstCorners, opt
 }
 
 async function _render(imageId, imageToPlace, opts = {}) {
+  const imageInfo = await assetCore.getAsset(imageId, {
+    minWidth: opts.resizeToWidth,
+    minHeight: opts.resizeToHeight,
+  })
   const placementMetadata = await getImageMetadata(imageToPlace)
-  const imageInfo = images[imageId]
+
   const srcCorners = [
     [0, 0],
     [0, placementMetadata.height - 1],
@@ -99,13 +82,21 @@ async function _render(imageId, imageToPlace, opts = {}) {
     [imageInfo.placement.topRight.x, imageInfo.placement.topRight.y],
   ]
 
-  const imageMeta = await getImageMetadata(imageInfo.imageData)
+  const imageMeta = await getImageMetadata(imageInfo.image)
   const transformed = await perspectiveTransform(imageToPlace, imageMeta, srcCorners, dstCorners, {
     highQuality: opts.highQuality,
   })
 
+  if (opts.onlyPlacementLayer) {
+    const onlyPlacementImage = await sharp(transformed)
+      .png()
+      .toBuffer()
+
+    return onlyPlacementImage
+  }
+
   const renderedImage = await sharp(transformed)
-    .overlayWith(imageInfo.imageData, {
+    .overlayWith(imageInfo.image, {
       top: 0,
       left: 0,
       gravity: sharp.gravity.northwest,
@@ -121,13 +112,7 @@ async function render(imageId, imageToPlace, _opts) {
     highQuality: false,
   }, _opts)
 
-  const imageMeta = images[imageId]
-  if (!imageMeta) {
-    const err = new Error(`Image not found: ${imageId}`)
-    err.status = 404
-    throw err
-  }
-
+  logger.debug(`Rendering image ${imageId}`)
   const image = await _render(imageId, imageToPlace, opts)
   const resizedImage = await _resize(image, opts)
 
@@ -137,20 +122,14 @@ async function render(imageId, imageToPlace, _opts) {
   }
 }
 
-async function getMetadata(imageId) {
-  if (!_.has(images, imageId)) {
-    const err = new Error(`Image not found: ${imageId}`)
-    err.status = 404
-    throw err
-  }
+async function getMetadata(imageId, opts = {}) {
+  logger.debug(`Getting metadata for ${imageId}`)
+  const imageInfo = await assetCore.getAsset(imageId, {
+    minWidth: opts.resizeToWidth,
+    minHeight: opts.resizeToHeight,
+  })
 
-  if (images[imageId].metadata) {
-    return images[imageId].metadata
-  }
-
-  const metadata = await getImageMetadata(images[imageId].imageData)
-  images[imageId].metadata = metadata
-  return metadata
+  return imageInfo.metadata
 }
 
 module.exports = {

@@ -9,6 +9,7 @@ require('dotenv').config()
 const config = {
   // Required
   API_KEY: getRequiredEnv('API_KEY', string),
+  ASSETS_BASE_URL: getRequiredEnv('ASSETS_BASE_URL', string),
   ALVARCARTO_RENDER_API_BASE_URL: getRequiredEnv('ALVARCARTO_RENDER_API_BASE_URL', string),
   ALVARCARTO_RENDER_API_KEY: getRequiredEnv('ALVARCARTO_RENDER_API_KEY', string),
 

@@ -39,6 +39,7 @@ function createRouter() {
     query: {
       resizeToWidth: Joi.number().min(50).optional(),
       resizeToHeight: Joi.number().min(50).optional(),
+      onlyPlacementLayer: Joi.boolean().optional(),
     },
   }
   router.get('/api/place-map/:imageId', validate(placeMapSchema), place.getPlaceMap)
@@ -48,6 +49,7 @@ function createRouter() {
       resizeToWidth: Joi.number().min(50).optional(),
       resizeToHeight: Joi.number().min(50).optional(),
       url: Joi.string(),
+      onlyPlacementLayer: Joi.boolean().optional(),
     },
   }
   router.get('/api/place-url/:imageId', _requireRole(ROLES.ADMIN), validate(placeUrlSchema), place.getPlaceUrl)

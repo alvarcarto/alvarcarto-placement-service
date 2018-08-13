@@ -1,8 +1,9 @@
 const BPromise = require('bluebird')
 const _ = require('lodash')
 const fs = require('fs')
-const ex = require('../util/express')
 const mime = require('mime-types')
+const ex = require('../util/express')
+const logger = require('../util/logger')(__filename)
 const posterCore = require('../core/posterCore')
 const placeCore = require('../core/placeCore')
 const ROLES = require('../enum/roles')
@@ -33,6 +34,7 @@ const getPlaceUrl = ex.createRoute(async (req, res) => {
   const posterImage = await posterCore.getUrl(req.query.url)
   const rendered = await placeCore.render(req.params.imageId, posterImage, {
     highQuality: !resizeDefined,
+    onlyPlacementLayer: req.query.onlyPlacementLayer,
     resizeToHeight: req.query.resizeToHeight,
     resizeToWidth: req.query.resizeToWidth,
   })
@@ -60,9 +62,12 @@ const getPlaceMap = ex.createRoute(async (req, res) => {
       resizeToWidth: metadata.width,
       resizeToHeight: metadata.height,
     })
+  logger.debug('Downloading poster with options', getPosterOpts)
+
   const posterImage = await posterCore.getPoster(getPosterOpts)
   const rendered = await placeCore.render(req.params.imageId, posterImage, {
     highQuality: !resizeDefined,
+    onlyPlacementLayer: req.query.onlyPlacementLayer,
     resizeToHeight: Number(req.query.resizeToHeight),
     resizeToWidth: Number(req.query.resizeToWidth),
   })
