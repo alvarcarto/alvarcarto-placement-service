@@ -148,16 +148,32 @@ async function getAsset(imageId, opts = {}) {
   const resizedPlacementData = await placementGuideCore.getPlacementData(resizedGuideLayer)
   // In case the original happened to be under 1200px wide, this will get the correct width
   const resizedMetadata = await getImageMetadata(resizedImage)
+  const fullResoMetadata = await getImageMetadata(freshImage)
+  const fullResoCropData = await placementGuideCore.getCropData(freshGuideLayer)
 
+  const widthRatio = resizedMetadata.width / fullResoMetadata.width
+  const heightRatio = resizedMetadata.height / fullResoMetadata.height
   const assetInfo = {
     original: {
       image: freshImage,
       placement: placementData,
-      metadata: await getImageMetadata(freshImage),
+      crop: fullResoCropData,
+      metadata: fullResoMetadata,
     },
     resizedImages: [{
       metadata: resizedMetadata,
       image: resizedImage,
+      // Has to be calculated precisely because resizing blurs the corner pixels in the guide layer
+      // This actually makes the crop area a bit larger and the crop area is too large, background
+      // leaks behind it.
+      crop: {
+        topLeft: {
+          x: Math.ceil(widthRatio * fullResoCropData.topLeft.x),
+          y: Math.ceil(heightRatio * fullResoCropData.topLeft.y),
+        },
+        width: Math.floor(widthRatio * fullResoCropData.width),
+        height: Math.floor(heightRatio * fullResoCropData.height),
+      },
       placement: resizedPlacementData,
     }],
   }

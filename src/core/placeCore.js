@@ -96,7 +96,10 @@ async function _render(imageId, imageToPlace, opts = {}) {
       .png()
       .toBuffer()
 
-    return onlyPlacementImage
+    return {
+      rendered: onlyPlacementImage,
+      imageInfo,
+    }
   }
 
   const renderedImage = await sharp(transformed)
@@ -108,7 +111,10 @@ async function _render(imageId, imageToPlace, opts = {}) {
     .png()
     .toBuffer()
 
-  return renderedImage
+  return {
+    rendered: renderedImage,
+    imageInfo,
+  }
 }
 
 async function render(imageId, imageToPlace, _opts) {
@@ -117,8 +123,25 @@ async function render(imageId, imageToPlace, _opts) {
   }, _opts)
 
   logger.debug(`Rendering image ${imageId}`)
-  const image = await _render(imageId, imageToPlace, opts)
-  const resizedImage = await _resize(image, opts)
+  const { rendered, imageInfo } = await _render(imageId, imageToPlace, opts)
+
+  let cropped = rendered
+  if (imageInfo.crop) {
+    const cropOpts = {
+      left: imageInfo.crop.topLeft.x,
+      top: imageInfo.crop.topLeft.y,
+      width: imageInfo.crop.width,
+      height: imageInfo.crop.height,
+    }
+    logger.debug(`Cropping image ${imageId}`, cropOpts)
+
+    cropped = await sharp(rendered)
+      .extract(cropOpts)
+      .png()
+      .toBuffer()
+  }
+
+  const resizedImage = await _resize(cropped, opts)
   const metadata = await getImageMetadata(resizedImage)
 
   return {

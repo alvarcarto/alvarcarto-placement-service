@@ -32,6 +32,14 @@ const isWhiteOrTransparent = (r, g, b, a) => {
   return isWhite || isTransparent
 }
 
+const isRed = (r, g, b) => {
+  return r > 200 && g < 10 && b < 10
+}
+
+const isGreen = (r, g, b) => {
+  return r < 10 && g > 200 && b < 10
+}
+
 function distance(p1, p2) {
   const xPart = Math.pow(p2.x - p1.x, 2)
   const yPart = Math.pow(p2.y - p1.y, 2)
@@ -47,14 +55,27 @@ function findCorners(width, height, pixels) {
   }
 }
 
+function findCropArea(width, height, pixels) {
+  const topLeft = _.minBy(pixels, p => distance(p, { x: 0, y: 0 }))
+  const bottomRight = _.minBy(pixels, p => distance(p, { x: width - 1, y: height - 1 }))
+
+  const cropWidth = bottomRight.x - topLeft.x
+  const cropHeight = bottomRight.y - topLeft.y
+  return {
+    topLeft,
+    width: cropWidth,
+    height: cropHeight,
+  }
+}
+
 async function getPlacementData(image) {
   const jimpImage = await Jimp.read(image)
 
-  const pixels = await filterPixels(jimpImage, (r, g, b, a) => !isWhiteOrTransparent(r, g, b, a))
+  const pixels = await filterPixels(jimpImage, (r, g, b, a) => isRed(r, g, b, a))
   if (pixels.length > 1000) {
-    logger.debug(`Found ${pixels.length} non-white pixels, too many to show the full array`)
+    logger.debug(`Found ${pixels.length} red pixels, too many to show the full array`)
   } else {
-    logger.debug(`Found ${pixels.length} non-white pixels:`, pixels)
+    logger.debug(`Found ${pixels.length} red pixels:`, pixels)
   }
 
   const cornerPixels = findCorners(jimpImage.bitmap.width, jimpImage.bitmap.height, pixels)
@@ -62,6 +83,26 @@ async function getPlacementData(image) {
   return cornerPixels
 }
 
+async function getCropData(image) {
+  const jimpImage = await Jimp.read(image)
+
+  const pixels = await filterPixels(jimpImage, (r, g, b, a) => isGreen(r, g, b, a))
+  if (pixels.length > 1000) {
+    logger.debug(`Found ${pixels.length} green pixels, too many to show the full array`)
+  } else {
+    logger.debug(`Found ${pixels.length} green pixels:`, pixels)
+  }
+
+  if (pixels.length < 2) {
+    return null
+  }
+
+  const cropArea = findCropArea(jimpImage.bitmap.width, jimpImage.bitmap.height, pixels)
+  logger.debug('Crop area:', cropArea)
+  return cropArea
+}
+
 module.exports = {
   getPlacementData,
+  getCropData,
 }
