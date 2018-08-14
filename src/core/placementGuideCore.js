@@ -2,6 +2,7 @@ const util = require('util')
 const _ = require('lodash')
 const BPromise = require('bluebird')
 const Jimp = require('jimp')
+const logger = require('../util/logger')(__filename)
 
 function filterPixels(jimpImage, filter) {
   const pixels = []
@@ -71,7 +72,15 @@ async function getPlacementData(image) {
   const jimpImage = await Jimp.read(image)
 
   const pixels = await filterPixels(jimpImage, (r, g, b, a) => !isWhiteOrTransparent(r, g, b, a))
-  return findCorners(pixels)
+  if (pixels.length > 1000) {
+    logger.debug(`Found ${pixels.length} non-white pixels, too many to show the full array`)
+  } else {
+    logger.debug(`Found ${pixels.length} non-white pixels:`, pixels)
+  }
+
+  const cornerPixels = findCorners(pixels)
+  logger.debug('Corner pixels:', cornerPixels)
+  return cornerPixels
 }
 
 module.exports = {
