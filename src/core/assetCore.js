@@ -93,7 +93,7 @@ function getListOfLocalAssets() {
 function findSuitableAssetDescription(assetInfo, opts = {}) {
   if (opts.minWidth) {
     const sortedW = _.sortBy(assetInfo.resizedImages, img => img.metadata.width)
-    const foundW = _.find(sortedW, img => img.metadata.width > opts.minWidth)
+    const foundW = _.find(sortedW, img => img.metadata.width >= opts.minWidth)
     if (foundW) {
       logger.debug(
         `Returning suitable resized asset based on minWidth=${opts.minWidth}.`,
@@ -105,7 +105,7 @@ function findSuitableAssetDescription(assetInfo, opts = {}) {
 
   if (opts.minHeight) {
     const sortedH = _.sortBy(assetInfo.resizedImages, img => img.metadata.height)
-    const foundH = _.find(sortedH, img => img.metadata.height > opts.minHeight)
+    const foundH = _.find(sortedH, img => img.metadata.height >= opts.minHeight)
     if (foundH) {
       logger.debug(
         `Returning suitable resized asset based on minHeight=${opts.minHeight}.`,
