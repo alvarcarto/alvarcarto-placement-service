@@ -26,7 +26,10 @@ function getImageMetadata(image) {
 function gmToBuffer(data) {
   return new BPromise((resolve, reject) => {
     data.stream((err, stdout, stderr) => {
-      if (err) { return reject(err) }
+      if (err) {
+        logger.error('Imagemagick error:', err)
+        return reject(err)
+      }
 
       const chunks = []
       stdout.on('data', (chunk) => { chunks.push(chunk) })
@@ -34,6 +37,7 @@ function gmToBuffer(data) {
       // but this is a promise so you'll have to deal with them one at a time
       stdout.once('end', () => { resolve(Buffer.concat(chunks)) })
       stderr.once('data', (data) => {
+        logger.error('Imagemagick error (stdout):', data)
         reject(new Error(data))
       })
     })
