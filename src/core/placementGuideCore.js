@@ -1,4 +1,3 @@
-const util = require('util')
 const _ = require('lodash')
 const BPromise = require('bluebird')
 const Jimp = require('jimp')
@@ -33,39 +32,19 @@ const isWhiteOrTransparent = (r, g, b, a) => {
   return isWhite || isTransparent
 }
 
-function sortCounterClockwise(topLeft, pixels) {
-  const centerX = _.sumBy(pixels, p => p.x) / pixels.length
-  const centerY = _.sumBy(pixels, p => p.y) / pixels.length
-
-  // Sort based on the angle from center coordinate
-  // https://stackoverflow.com/questions/1709283/how-can-i-sort-a-coordinate-list-for-a-rectangle-counterclockwise
-  const sorted = _.sortBy(pixels, (p) => {
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/atan2#Description
-    const normalizedAngle = (Math.atan2(p.x - centerX, p.y - centerY) + (2 * Math.PI)) % (2 * Math.PI)
-    return normalizedAngle
-  })
-
-  const index = _.findIndex(sorted, p => p.x === topLeft.x && p.y === topLeft.y)
-  if (index === -1) {
-    throw new Error(`topLeft coordinate not found from pixels: ${util.inspect(topLeft)} ${util.inspect(pixels)}`)
-  }
-
-  return {
-    topLeft: sorted[index],
-    bottomLeft: sorted[(index + 1) % sorted.length],
-    bottomRight: sorted[(index + 2) % sorted.length],
-    topRight: sorted[(index + 3) % sorted.length],
-  }
+function distance(p1, p2) {
+  const xPart = Math.pow(p2.x - p1.x, 2)
+  const yPart = Math.pow(p2.y - p1.y, 2)
+  return Math.sqrt(xPart + yPart)
 }
 
-function findCorners(pixels) {
-  const minX = _.minBy(pixels, p => p.x)
-  const maxY = _.maxBy(pixels, p => p.y)
-  const maxX = _.maxBy(pixels, p => p.x)
-  const minY = _.minBy(pixels, p => p.y)
-  const topLeft = _.minBy([minX, maxY, maxX, minY], p => p.x + p.y)
-
-  return sortCounterClockwise(topLeft, [minX, maxY, maxX, minY])
+function findCorners(width, height, pixels) {
+  return {
+    topLeft: _.minBy(pixels, p => distance(p, { x: 0, y: 0 })),
+    bottomLeft: _.minBy(pixels, p => distance(p, { x: 0, y: height - 1 })),
+    bottomRight: _.minBy(pixels, p => distance(p, { x: width - 1, y: height - 1 })),
+    topRight: _.minBy(pixels, p => distance(p, { x: width - 1, y: 0 })),
+  }
 }
 
 async function getPlacementData(image) {
@@ -78,7 +57,7 @@ async function getPlacementData(image) {
     logger.debug(`Found ${pixels.length} non-white pixels:`, pixels)
   }
 
-  const cornerPixels = findCorners(pixels)
+  const cornerPixels = findCorners(jimpImage.bitmap.width, jimpImage.bitmap.height, pixels)
   logger.debug('Corner pixels:', cornerPixels)
   return cornerPixels
 }
