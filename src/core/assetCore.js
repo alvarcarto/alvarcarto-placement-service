@@ -140,9 +140,11 @@ async function getAsset(imageId, opts = {}) {
     throw err
   }
 
+  logger.debug(`Get placement data for original ${imageId}`)
   const placementData = await placementGuideCore.getPlacementData(freshGuideLayer)
   const resizedImage = await sharp(freshImage).resize(1200, null).png().toBuffer()
   const resizedGuideLayer = await sharp(freshGuideLayer).resize(1200, null).png().toBuffer()
+  logger.debug(`Get placement data for resized ${imageId}`)
   const resizedPlacementData = await placementGuideCore.getPlacementData(resizedGuideLayer)
   // In case the original happened to be under 1200px wide, this will get the correct width
   const resizedMetadata = await getImageMetadata(resizedImage)
