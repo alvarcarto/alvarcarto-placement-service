@@ -10,7 +10,7 @@ const config = require('../config')
 
 BPromise.promisifyAll(fs)
 
-const cache = {}
+let cache = {}
 
 function fileExists(filePath) {
   return fs.statAsync(filePath)
@@ -173,7 +173,13 @@ async function getListOfAssets() {
   return _.uniqBy(allAssets, a => a.id)
 }
 
+function clearCache() {
+  logger.info('Asset cache cleared')
+  cache = {}
+}
+
 module.exports = {
   getAsset,
   getListOfAssets,
+  clearCache,
 }

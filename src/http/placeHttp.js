@@ -11,18 +11,18 @@ const ROLES = require('../enum/roles')
 
 BPromise.promisifyAll(fs)
 
-function getAttachmentName() {
-  return 'alvarcarto'
-}
-
 const getPlaceUrl = ex.createRoute(async (req, res) => {
   const resizeDefined = _.has(req.query, 'resizeToWidth') || _.has(req.query, 'resizeToHeight')
   const isAnon = _.get(req, 'user.role') !== ROLES.ADMIN
-  if (!resizeDefined && isAnon) {
-    ex.throwStatus(403, 'Anonymous requests must define a resize parameter.')
-  }
-
   if (isAnon) {
+    if (!resizeDefined) {
+      ex.throwStatus(403, 'Anonymous requests must define a resize parameter.')
+    }
+
+    if (_.has(req.query, 'clearCache')) {
+      ex.throwStatus(403, 'Anonymous requests cannot clear the cache.')
+    }
+
     if (req.query.resizeToWidth && Number(req.query.resizeToWidth) > 1200) {
       ex.throwStatus(403, 'resizeToWidth must be <= 1200')
     }
@@ -30,6 +30,10 @@ const getPlaceUrl = ex.createRoute(async (req, res) => {
     if (req.query.resizeToHeight && Number(req.query.resizeToHeight) > 1200) {
       ex.throwStatus(403, 'resizeToHeight must be <= 1200')
     }
+  }
+
+  if (req.query.clearCache) {
+    assetCore.clearCache()
   }
 
   const posterImage = await posterCore.getUrl(req.query.url)
@@ -52,11 +56,15 @@ const getPlaceUrl = ex.createRoute(async (req, res) => {
 const getPlaceMap = ex.createRoute(async (req, res) => {
   const resizeDefined = _.has(req.query, 'resizeToWidth') || _.has(req.query, 'resizeToHeight')
   const isAnon = _.get(req, 'user.role') !== ROLES.ADMIN
-  if (!resizeDefined && isAnon) {
-    ex.throwStatus(403, 'Anonymous requests must define a resize parameter.')
-  }
-
   if (isAnon) {
+    if (!resizeDefined) {
+      ex.throwStatus(403, 'Anonymous requests must define a resize parameter.')
+    }
+
+    if (_.has(req.query, 'clearCache')) {
+      ex.throwStatus(403, 'Anonymous requests cannot clear the cache.')
+    }
+
     if (req.query.resizeToWidth && Number(req.query.resizeToWidth) > 1200) {
       ex.throwStatus(403, 'resizeToWidth must be <= 1200')
     }
@@ -64,6 +72,10 @@ const getPlaceMap = ex.createRoute(async (req, res) => {
     if (req.query.resizeToHeight && Number(req.query.resizeToHeight) > 1200) {
       ex.throwStatus(403, 'resizeToHeight must be <= 1200')
     }
+  }
+
+  if (req.query.clearCache) {
+    assetCore.clearCache()
   }
 
   const metadata = await placeCore.getMetadata(req.params.imageId)
