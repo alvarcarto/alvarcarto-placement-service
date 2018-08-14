@@ -62,7 +62,7 @@ function findCorners(pixels) {
   const maxY = _.maxBy(pixels, p => p.y)
   const maxX = _.maxBy(pixels, p => p.x)
   const minY = _.minBy(pixels, p => p.y)
-  const topLeft = _.minBy(pixels, p => p.x + p.y)
+  const topLeft = _.minBy([minX, maxY, maxX, minY], p => p.x + p.y)
 
   return sortCounterClockwise(topLeft, [minX, maxY, maxX, minY])
 }
