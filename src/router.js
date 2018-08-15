@@ -41,7 +41,8 @@ function createRouter() {
     query: {
       resizeToWidth: Joi.number().min(50).optional(),
       resizeToHeight: Joi.number().min(50).optional(),
-      onlyGuideLayer: Joi.boolean().optional(),
+      posterBlur: Joi.number().min(0.3).max(1000).optional(),
+      onlyPosterLayer: Joi.boolean().optional(),
       clearCache: Joi.boolean().optional(),
     },
   }
@@ -51,8 +52,9 @@ function createRouter() {
     query: {
       resizeToWidth: Joi.number().min(50).optional(),
       resizeToHeight: Joi.number().min(50).optional(),
+      posterBlur: Joi.number().min(0.3).max(1000).optional(),
       url: Joi.string(),
-      onlyGuideLayer: Joi.boolean().optional(),
+      onlyPosterLayer: Joi.boolean().optional(),
       clearCache: Joi.boolean().optional(),
     },
   }

@@ -79,20 +79,38 @@ async function _render(imageId, imageToPlace, opts = {}) {
     [placementMetadata.width - 1, placementMetadata.height - 1],
     [placementMetadata.width - 1, 0],
   ]
+
+  const { placement } = imageInfo.instructions
   const dstCorners = [
-    [imageInfo.placement.topLeft.x, imageInfo.placement.topLeft.y],
-    [imageInfo.placement.bottomLeft.x, imageInfo.placement.bottomLeft.y],
-    [imageInfo.placement.bottomRight.x, imageInfo.placement.bottomRight.y],
-    [imageInfo.placement.topRight.x, imageInfo.placement.topRight.y],
+    [placement.topLeft.x, placement.topLeft.y],
+    [placement.bottomLeft.x, placement.bottomLeft.y],
+    [placement.bottomRight.x, placement.bottomRight.y],
+    [placement.topRight.x, placement.topRight.y],
   ]
 
-  const imageMeta = await getImageMetadata(imageInfo.image)
-  const transformed = await perspectiveTransform(imageToPlace, imageMeta, srcCorners, dstCorners, {
+  const { jsonMetadata, sceneImageMetadata } = imageInfo
+  const transformed = await perspectiveTransform(imageToPlace, sceneImageMetadata, srcCorners, dstCorners, {
     highQuality: opts.highQuality,
   })
 
-  if (opts.onlyGuideLayer) {
-    const onlyPlacementImage = await sharp(transformed)
+  let blurred = transformed
+  const shouldBlur = opts.posterBlur || jsonMetadata.posterBlur
+  if (shouldBlur) {
+    const blurAmount = opts.posterBlur ? opts.posterBlur : jsonMetadata.posterBlur
+    const blurSource = opts.posterBlur ? 'request options' : 'json metadata'
+    logger.debug(`Blurring poster for ${imageId} with ${blurAmount} from ${blurSource}`)
+
+    blurred = await sharp(transformed)
+      .blur(blurAmount)
+      .png()
+      .toBuffer()
+  }
+
+  logger.debug(`Poster layer resolution: ${placementMetadata.width}x${placementMetadata.height}`)
+  logger.debug(`Scene layer resolution:  ${sceneImageMetadata.width}x${sceneImageMetadata.height}`)
+
+  if (opts.onlyPosterLayer) {
+    const onlyPlacementImage = await sharp(blurred)
       .png()
       .toBuffer()
 
@@ -102,8 +120,8 @@ async function _render(imageId, imageToPlace, opts = {}) {
     }
   }
 
-  const renderedImage = await sharp(transformed)
-    .overlayWith(imageInfo.image, {
+  const renderedImage = await sharp(blurred)
+    .overlayWith(imageInfo.sceneImage, {
       top: 0,
       left: 0,
       gravity: sharp.gravity.northwest,
@@ -122,16 +140,17 @@ async function render(imageId, imageToPlace, _opts) {
     highQuality: false,
   }, _opts)
 
-  logger.debug(`Rendering image ${imageId}`)
   const { rendered, imageInfo } = await _render(imageId, imageToPlace, opts)
+  const imageMetadata = await getImageMetadata(rendered)
+  logger.debug(`Rendered image with resolution ${imageMetadata.width}x${imageMetadata.height}`)
 
   let cropped = rendered
   if (imageInfo.crop) {
     const cropOpts = {
-      left: imageInfo.crop.topLeft.x,
-      top: imageInfo.crop.topLeft.y,
-      width: imageInfo.crop.width,
-      height: imageInfo.crop.height,
+      left: imageInfo.instructions.crop.topLeft.x,
+      top: imageInfo.instructions.crop.topLeft.y,
+      width: imageInfo.instructions.crop.width,
+      height: imageInfo.instructions.crop.height,
     }
     logger.debug(`Cropping image ${imageId}`, cropOpts)
 
@@ -152,13 +171,12 @@ async function render(imageId, imageToPlace, _opts) {
 }
 
 async function getMetadata(imageId, opts = {}) {
-  logger.debug(`Getting metadata for ${imageId}`)
   const imageInfo = await assetCore.getAsset(imageId, {
     minWidth: opts.resizeToWidth,
     minHeight: opts.resizeToHeight,
   })
 
-  return imageInfo.metadata
+  return imageInfo.sceneImageMetadata
 }
 
 module.exports = {

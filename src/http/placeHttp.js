@@ -39,7 +39,8 @@ const getPlaceUrl = ex.createRoute(async (req, res) => {
   const posterImage = await posterCore.getUrl(req.query.url)
   const rendered = await placeCore.render(req.params.imageId, posterImage, {
     highQuality: !resizeDefined,
-    onlyGuideLayer: req.query.onlyGuideLayer,
+    onlyPosterLayer: req.query.onlyPosterLayer,
+    posterBlur: Number(req.query.posterBlur),
     resizeToHeight: Number(req.query.resizeToHeight),
     resizeToWidth: Number(req.query.resizeToWidth),
   })
@@ -78,19 +79,23 @@ const getPlaceMap = ex.createRoute(async (req, res) => {
     assetCore.clearCache()
   }
 
-  const metadata = await placeCore.getMetadata(req.params.imageId)
-  const getPosterOpts = resizeDefined
-    ? req.query
-    : _.merge({}, req.query, {
-      resizeToWidth: metadata.width,
-      resizeToHeight: metadata.height,
-    })
+  const assetInfo = await assetCore.getAsset(req.params.imageId, {
+    minWidth: Number(req.query.resizeToHeight),
+    minHeight: Number(req.query.resizeToWidth),
+  })
+  const getPosterOpts = _.merge({}, req.query, {
+    resizeToWidth: assetInfo.sceneImageMetadata.width,
+    resizeToHeight: assetInfo.sceneImageMetadata.height,
+    size: req.query.size || assetInfo.jsonMetadata.posterSize || '50x70cm',
+    orientation: req.query.orientation || assetInfo.jsonMetadata.posterOrientation || 'portrait'
+  })
   logger.debug('Downloading poster with options', getPosterOpts)
 
   const posterImage = await posterCore.getPoster(getPosterOpts)
   const rendered = await placeCore.render(req.params.imageId, posterImage, {
     highQuality: !resizeDefined,
-    onlyGuideLayer: req.query.onlyGuideLayer,
+    onlyPosterLayer: req.query.onlyPosterLayer,
+    posterBlur: Number(req.query.posterBlur),
     resizeToHeight: Number(req.query.resizeToHeight),
     resizeToWidth: Number(req.query.resizeToWidth),
   })
