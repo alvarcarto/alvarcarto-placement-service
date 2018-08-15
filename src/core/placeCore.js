@@ -145,7 +145,7 @@ async function render(imageId, imageToPlace, _opts) {
   logger.debug(`Rendered image with resolution ${imageMetadata.width}x${imageMetadata.height}`)
 
   let cropped = rendered
-  if (imageInfo.crop) {
+  if (imageInfo.instructions.crop) {
     const cropOpts = {
       left: imageInfo.instructions.crop.topLeft.x,
       top: imageInfo.instructions.crop.topLeft.y,
