@@ -188,7 +188,7 @@ async function createResizeAssetDescription(originalAssetDescription, newDimensi
       crop: originalAssetDescription.instructions.crop
         ? {
           topLeft: scaleCoord(originalAssetDescription.instructions.crop.topLeft, ratios),
-          width: Math.round(ratios.width * originalAssetDescription.crop.width),
+          width: Math.round(ratios.width * originalAssetDescription.instructions.crop.width),
           height: Math.round(ratios.height * originalAssetDescription.instructions.crop.height),
         }
         : null,
