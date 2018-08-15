@@ -166,14 +166,16 @@ async function getAsset(imageId, opts = {}) {
       // Has to be calculated precisely because resizing blurs the corner pixels in the guide layer
       // This actually makes the crop area a bit larger and the crop area is too large, background
       // leaks behind it.
-      crop: {
-        topLeft: {
-          x: Math.ceil(widthRatio * fullResoCropData.topLeft.x),
-          y: Math.ceil(heightRatio * fullResoCropData.topLeft.y),
-        },
-        width: Math.floor(widthRatio * fullResoCropData.width),
-        height: Math.floor(heightRatio * fullResoCropData.height),
-      },
+      crop: fullResoCropData
+        ? {
+          topLeft: {
+            x: Math.ceil(widthRatio * fullResoCropData.topLeft.x),
+            y: Math.ceil(heightRatio * fullResoCropData.topLeft.y),
+          },
+          width: Math.floor(widthRatio * fullResoCropData.width),
+          height: Math.floor(heightRatio * fullResoCropData.height),
+        }
+        : null,
       placement: resizedPlacementData,
     }],
   }
