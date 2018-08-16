@@ -63,7 +63,7 @@ function getAssetFromS3(fileName) {
     })
 }
 
-async function getFreshAsset(fileName) {
+async function getFreshAsset(fileName, opts = {}) {
   const fromLocal = await getAssetFromLocal(fileName)
   if (fromLocal) {
     logger.debug(`Fetched asset from local disk: ${fileName}`)
@@ -74,6 +74,10 @@ async function getFreshAsset(fileName) {
   if (fromS3) {
     logger.debug(`Fetched asset from S3: ${fileName}`)
     return fromS3
+  }
+
+  if (opts.ignoreNotFound) {
+    return null
   }
 
   const err = `Asset with id ${fileName} not found`
@@ -159,8 +163,8 @@ async function createResizeAssetDescription(originalAssetDescription, newDimensi
   // In case the original happened to be under the resize dimensions, this will get the correct
   // dimensions
   const resizedSceneMetadata = await getImageMetadata(resizedScene)
-  const posterBlurImage = originalAssetDescription.instructions.blur
-    ? await sharp(originalAssetDescription.instructions.blur)
+  const variableBlurImage = originalAssetDescription.instructions.variableBlurImage
+    ? await sharp(originalAssetDescription.instructions.variableBlurImage)
       .resize(newDimensions.width, newDimensions.height)
       .png()
       .toBuffer()
@@ -192,7 +196,7 @@ async function createResizeAssetDescription(originalAssetDescription, newDimensi
           height: Math.round(ratios.height * originalAssetDescription.instructions.crop.height),
         }
         : null,
-      posterBlurImage,
+      variableBlurImage,
     },
   }
 }
@@ -216,6 +220,7 @@ async function getAsset(imageId, opts = {}) {
 
   const freshImage = await getFreshAsset(`${imageId}.png`)
   const freshGuideLayer = await getFreshAsset(`${imageId}-guide-layer.png`)
+  const freshBlurLayer = await getFreshAsset(`${imageId}-blur-layer.png`, { ignoreNotFound: true })
 
   logger.debug(`Get placement data for original ${imageId}`)
   const originalAssetDescription = {
@@ -225,7 +230,7 @@ async function getAsset(imageId, opts = {}) {
     instructions: {
       placement: await placementGuideCore.getPlacementData(freshGuideLayer),
       crop: await placementGuideCore.getCropData(freshGuideLayer),
-      posterBlurImage: null,
+      variableBlurImage: freshBlurLayer,
     }
   }
 

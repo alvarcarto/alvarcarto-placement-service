@@ -40,9 +40,11 @@ const getPlaceUrl = ex.createRoute(async (req, res) => {
   const rendered = await placeCore.render(req.params.imageId, posterImage, {
     highQuality: !resizeDefined,
     onlyPosterLayer: req.query.onlyPosterLayer,
-    posterBlur: Number(req.query.posterBlur),
-    resizeToHeight: Number(req.query.resizeToHeight),
-    resizeToWidth: Number(req.query.resizeToWidth),
+    format: req.query.format,
+    posterBlur: req.query.posterBlur ? Number(req.query.posterBlur) : undefined,
+    variableBlur: req.query.variableBlur ? Number(req.query.variableBlur) : undefined,
+    resizeToHeight: req.query.resizeToHeight ? Number(req.query.resizeToHeight) : undefined,
+    resizeToWidth: req.query.resizeToWidth ? Number(req.query.resizeToWidth) : undefined,
   })
 
   if (req.query.download) {
@@ -95,9 +97,11 @@ const getPlaceMap = ex.createRoute(async (req, res) => {
   const rendered = await placeCore.render(req.params.imageId, posterImage, {
     highQuality: !resizeDefined,
     onlyPosterLayer: req.query.onlyPosterLayer,
-    posterBlur: Number(req.query.posterBlur),
-    resizeToHeight: Number(req.query.resizeToHeight),
-    resizeToWidth: Number(req.query.resizeToWidth),
+    format: req.query.format,
+    posterBlur: req.query.posterBlur ? Number(req.query.posterBlur) : undefined,
+    variableBlur: req.query.variableBlur ? Number(req.query.variableBlur) : undefined,
+    resizeToHeight: req.query.resizeToHeight ? Number(req.query.resizeToHeight) : undefined,
+    resizeToWidth: req.query.resizeToWidth ? Number(req.query.resizeToWidth) : undefined,
   })
 
   if (req.query.download) {

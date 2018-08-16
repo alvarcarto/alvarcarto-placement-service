@@ -10,6 +10,9 @@
 !.env.sample
 !.env.test.sample
 
+tmp/*
+!tmp/.gitkeep
+
 # Logs
 logs
 *.log

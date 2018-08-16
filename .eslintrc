@@ -5,6 +5,7 @@
     "no-console": "off",
     "no-plusplus": "off",
     "arrow-body-style": "off",
+    "no-nested-ternary": "off",
     "function-paren-newline": ["error", "multiline"],
     "object-curly-newline": ["error", {
       "minProperties": 5,
