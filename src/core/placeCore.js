@@ -167,7 +167,7 @@ async function _render(imageId, imageToPlace, opts = {}) {
 
   let blurred = transformed
   const shouldBlur = opts.posterBlur || jsonMetadata.posterBlur
-  const posterBlurAmount = opts.posterBlur ? opts.posterBlur : jsonMetadata.posterBlur
+  const posterBlurAmount = _.isFinite(opts.posterBlur) ? opts.posterBlur : jsonMetadata.posterBlur
   if (shouldBlur && posterBlurAmount > 0) {
     const blurSource = opts.posterBlur ? 'request options' : 'json metadata'
     logger.debug(`Blurring poster for ${imageId} with ${posterBlurAmount} from ${blurSource}`)
@@ -207,7 +207,11 @@ async function _render(imageId, imageToPlace, opts = {}) {
     .toBuffer()
 
   let variableBlurredImage = renderedImage
-  const variableBlurSigma = opts.variableBlur || jsonMetadata.variableBlur || 3
+  const variableBlurSigma = _.isFinite(opts.variableBlur)
+    ? opts.variableBlur
+    : _.isFinite(jsonMetadata.variableBlur)
+      ? jsonMetadata.variableBlur
+      : 3
   if (variableBlurImage && variableBlurSigma > 0) {
     const variableBlurImageMetadata = await getImageMetadata(variableBlurImage)
     const dimensionStr = `${variableBlurImageMetadata.width}x${variableBlurImageMetadata.height}`
@@ -241,7 +245,7 @@ function formatToMimeType(format) {
 
 function getFormatOptions(format) {
   switch (format) {
-    case 'jpg': return { quality: 90, chromaSubsampling: '4:4:4' }
+    case 'jpg': return { quality: 95, chromaSubsampling: '4:4:4' }
     default: return undefined
   }
 }
