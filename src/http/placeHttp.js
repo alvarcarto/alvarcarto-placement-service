@@ -94,15 +94,6 @@ const getPlaceMap = ex.createRoute(async (req, res) => {
   logger.debug('Downloading poster with options', getPosterOpts)
 
   const posterImage = await posterCore.getPoster(getPosterOpts)
-  console.log({
-    highQuality: !resizeDefined,
-    onlyPosterLayer: req.query.onlyPosterLayer,
-    format: req.query.format,
-    posterBlur: _.isFinite(req.query.posterBlur) ? Number(req.query.posterBlur) : undefined,
-    variableBlur: _.isFinite(req.query.variableBlur) ? Number(req.query.variableBlur) : undefined,
-    resizeToHeight: _.isFinite(req.query.resizeToHeight) ? Number(req.query.resizeToHeight) : undefined,
-    resizeToWidth: _.isFinite(req.query.resizeToWidth) ? Number(req.query.resizeToWidth) : undefined,
-  })
   const rendered = await placeCore.render(req.params.imageId, posterImage, {
     highQuality: !resizeDefined,
     onlyPosterLayer: req.query.onlyPosterLayer,
