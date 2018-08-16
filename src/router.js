@@ -41,8 +41,8 @@ function createRouter() {
     query: {
       resizeToWidth: Joi.number().min(50).optional(),
       resizeToHeight: Joi.number().min(50).optional(),
-      posterBlur: Joi.number().min(0.3).max(1000).optional(),
-      variableBlur: Joi.number().min(0.1).max(100).optional(),
+      posterBlur: Joi.number().min(0).max(1000).optional(),
+      variableBlur: Joi.number().min(0).max(100).optional(),
       onlyPosterLayer: Joi.boolean().optional(),
       clearCache: Joi.boolean().optional(),
       format: Joi.string().valid(['png', 'jpg', 'webp']).optional(),
@@ -54,8 +54,8 @@ function createRouter() {
     query: {
       resizeToWidth: Joi.number().min(50).optional(),
       resizeToHeight: Joi.number().min(50).optional(),
-      posterBlur: Joi.number().min(0.3).max(1000).optional(),
-      variableBlur: Joi.number().min(0.1).max(100).optional(),
+      posterBlur: Joi.number().min(0).max(1000).optional(),
+      variableBlur: Joi.number().min(0).max(100).optional(),
       url: Joi.string(),
       onlyPosterLayer: Joi.boolean().optional(),
       clearCache: Joi.boolean().optional(),

@@ -167,13 +167,13 @@ async function _render(imageId, imageToPlace, opts = {}) {
 
   let blurred = transformed
   const shouldBlur = opts.posterBlur || jsonMetadata.posterBlur
-  if (shouldBlur) {
-    const blurAmount = opts.posterBlur ? opts.posterBlur : jsonMetadata.posterBlur
+  const posterBlurAmount = opts.posterBlur ? opts.posterBlur : jsonMetadata.posterBlur
+  if (shouldBlur && posterBlurAmount > 0) {
     const blurSource = opts.posterBlur ? 'request options' : 'json metadata'
-    logger.debug(`Blurring poster for ${imageId} with ${blurAmount} from ${blurSource}`)
+    logger.debug(`Blurring poster for ${imageId} with ${posterBlurAmount} from ${blurSource}`)
 
     blurred = await sharp(transformed)
-      .blur(blurAmount * resizeRatio)
+      .blur(posterBlurAmount * resizeRatio)
       .png()
       .toBuffer()
   }
@@ -207,7 +207,8 @@ async function _render(imageId, imageToPlace, opts = {}) {
     .toBuffer()
 
   let variableBlurredImage = renderedImage
-  if (variableBlurImage) {
+  const variableBlurSigma = opts.variableBlur || jsonMetadata.variableBlur || 3
+  if (variableBlurImage && variableBlurSigma > 0) {
     const variableBlurImageMetadata = await getImageMetadata(variableBlurImage)
     const dimensionStr = `${variableBlurImageMetadata.width}x${variableBlurImageMetadata.height}`
     const blurSource = opts.variableBlur
@@ -215,12 +216,11 @@ async function _render(imageId, imageToPlace, opts = {}) {
       : jsonMetadata.variableBlur
         ? 'json metadata'
         : 'default value'
-    const blurSigma = opts.variableBlur || jsonMetadata.variableBlur || 3
 
-    logger.debug(`Applying variable blur layer (${dimensionStr}) with sigma ${blurSigma} from ${blurSource}`)
+    logger.debug(`Applying variable blur layer (${dimensionStr}) with sigma ${variableBlurSigma} from ${blurSource}`)
 
     variableBlurredImage = await applyVariableBlur(renderedImage, variableBlurImage, {
-      blurSigma: blurSigma * resizeRatio,
+      blurSigma: variableBlurSigma * resizeRatio,
     })
   }
 
