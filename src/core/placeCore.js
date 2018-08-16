@@ -106,8 +106,7 @@ async function applyVariableBlur(image, blurImage, _opts = {}) {
   }, _opts)
 
   const data = await withTempFile(blurImage, 'png', (filePath) => {
-    // http://www.imagemagick.org/Usage/distorts/#perspective
-    // https://www.imagemagick.org/script/command-line-options.php#distort
+    // http://www.imagemagick.org/Usage/mapping/#blur
     return gm(image)
       .command('composite')
       .in('-blur', opts.blurSigma)
@@ -116,6 +115,21 @@ async function applyVariableBlur(image, blurImage, _opts = {}) {
   })
 
   return gmToBuffer(data)
+}
+
+function getResizeRatio(oldDimensions, newDimensions) {
+  const oldPixels = oldDimensions.width * oldDimensions.height
+  if (newDimensions.width) {
+    const ratio = newDimensions.width / oldDimensions.width
+    const newHeight = ratio * oldDimensions.height
+    return (newDimensions.width * newHeight) / oldPixels
+  } else if (newDimensions.height) {
+    const ratio = newDimensions.height / oldDimensions.height
+    const newWidth = ratio * oldDimensions.width
+    return (newDimensions.height * newWidth) / oldPixels
+  }
+
+  return 1
 }
 
 async function _render(imageId, imageToPlace, opts = {}) {
@@ -145,6 +159,12 @@ async function _render(imageId, imageToPlace, opts = {}) {
     highQuality: opts.highQuality,
   })
 
+  const resizeRatio = getResizeRatio(sceneImageMetadata, {
+    width: opts.resizeToWidth,
+    height: opts.resizeToHeight,
+  })
+  logger.debug(`Resize ratio is ${resizeRatio}`)
+
   let blurred = transformed
   const shouldBlur = opts.posterBlur || jsonMetadata.posterBlur
   if (shouldBlur) {
@@ -153,7 +173,7 @@ async function _render(imageId, imageToPlace, opts = {}) {
     logger.debug(`Blurring poster for ${imageId} with ${blurAmount} from ${blurSource}`)
 
     blurred = await sharp(transformed)
-      .blur(blurAmount)
+      .blur(blurAmount * resizeRatio)
       .png()
       .toBuffer()
   }
@@ -199,7 +219,9 @@ async function _render(imageId, imageToPlace, opts = {}) {
 
     logger.debug(`Applying variable blur layer (${dimensionStr}) with sigma ${blurSigma} from ${blurSource}`)
 
-    variableBlurredImage = await applyVariableBlur(renderedImage, variableBlurImage, { blurSigma })
+    variableBlurredImage = await applyVariableBlur(renderedImage, variableBlurImage, {
+      blurSigma: blurSigma * resizeRatio,
+    })
   }
 
   return {
@@ -211,10 +233,16 @@ async function _render(imageId, imageToPlace, opts = {}) {
 function formatToMimeType(format) {
   switch (format) {
     case 'png': return 'image/png'
-    case 'jpeg': return 'image/jpeg'
     case 'jpg': return 'image/jpeg'
     case 'webp': return 'image/webp'
     default: throw new Error(`Unknown format: ${format}`)
+  }
+}
+
+function getFormatOptions(format) {
+  switch (format) {
+    case 'jpg': return { quality: 90, chromaSubsampling: '4:4:4' }
+    default: return undefined
   }
 }
 
@@ -248,7 +276,9 @@ async function render(imageId, imageToPlace, _opts) {
   const metadata = await getImageMetadata(resizedImage)
 
   return {
-    imageData: await sharp(resizedImage).toFormat(opts.format).toBuffer(),
+    imageData: await sharp(resizedImage)
+      .toFormat(opts.format, getFormatOptions(opts.format))
+      .toBuffer(),
     metadata,
     mimeType: formatToMimeType(opts.format),
   }
