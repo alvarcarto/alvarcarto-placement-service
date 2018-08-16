@@ -108,9 +108,11 @@ async function applyVariableBlur(image, blurImage, _opts = {}) {
   const data = await withTempFile(blurImage, 'png', (filePath) => {
     // http://www.imagemagick.org/Usage/mapping/#blur
     return gm(image)
-      .command('composite')
-      .in('-blur', opts.blurSigma)
-      .in(filePath)
+      .command('convert')
+      .out(filePath)
+      .out('-compose', 'blur')
+      .out('-define', `compose:args=${opts.blurSigma}`)
+      .out('-composite')
       .setFormat('PNG')
   })
 
