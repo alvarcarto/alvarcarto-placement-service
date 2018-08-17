@@ -109,9 +109,10 @@ async function getListOfS3Assets() {
 
   const assets = await BPromise.map(jsonFiles, async (s3Object) => {
     const assetMeta = await fetchAssetJson(createS3Url(s3Object.Key))
+    const id = path.basename(s3Object.Key, '.json')
     return _.merge({}, assetMeta, {
-      id: path.basename(s3Object.Key, '.json'),
-      smallPhotoUrl: `https://alvarcarto-placement.imgix.net/${s3Object.Key}.png?w=300`,
+      id,
+      smallPhotoUrl: `https://alvarcarto-placement.imgix.net/${id}.png?w=300`,
     })
   })
 
