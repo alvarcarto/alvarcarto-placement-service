@@ -111,6 +111,7 @@ async function getListOfS3Assets() {
     const assetMeta = await fetchAssetJson(createS3Url(s3Object.Key))
     return _.merge({}, assetMeta, {
       id: path.basename(s3Object.Key, '.json'),
+      smallPhotoUrl: `https://alvarcarto-placement.imgix.net/${s3Object.Key}.png?w=300`,
     })
   })
 
