@@ -80,7 +80,7 @@ async function getFreshAsset(fileName, opts = {}) {
     return null
   }
 
-  const err = `Asset with id ${fileName} not found`
+  const err = new Error(`Asset with id ${fileName} not found`)
   err.status = 404
   throw err
 }
