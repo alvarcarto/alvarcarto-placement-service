@@ -102,7 +102,7 @@ function withTempFile(data, ext, func) {
 
 async function applyVariableBlur(image, blurImage, _opts = {}) {
   const opts = _.merge({
-    blurSigma: 3,
+    blurSigma: 5,
   }, _opts)
 
   const data = await withTempFile(blurImage, 'png', (filePath) => {
@@ -111,7 +111,7 @@ async function applyVariableBlur(image, blurImage, _opts = {}) {
       .command('convert')
       .out(filePath)
       .out('-compose', 'blur')
-      .out('-define', `compose:args=${opts.blurSigma}`)
+      .out('-define', `compose:args=0x${opts.blurSigma}`)
       .out('-composite')
       .setFormat('PNG')
   })
@@ -119,7 +119,8 @@ async function applyVariableBlur(image, blurImage, _opts = {}) {
   return gmToBuffer(data)
 }
 
-function getResizeRatio(oldDimensions, newDimensions) {
+
+function getResizePixelRatio(oldDimensions, newDimensions) {
   const oldPixels = oldDimensions.width * oldDimensions.height
   if (newDimensions.width) {
     const ratio = newDimensions.width / oldDimensions.width
@@ -132,6 +133,18 @@ function getResizeRatio(oldDimensions, newDimensions) {
   }
 
   return 1
+}
+
+function calculateSharpBlur(blurSigma, ratio) {
+  const newSigma = blurSigma * ratio
+  if (newSigma < 0.3) {
+    logger.warn(`Poster blur sigma would be under 0.3 (${newSigma}), so will set it to 0`)
+    // If it'll be very small, let's just put it to zero. Resizing the image will also
+    // blur the poster a bit
+    return 0
+  }
+
+  return newSigma
 }
 
 async function _render(imageId, imageToPlace, opts = {}) {
@@ -161,7 +174,8 @@ async function _render(imageId, imageToPlace, opts = {}) {
     highQuality: opts.highQuality,
   })
 
-  const resizeRatio = getResizeRatio(sceneImageMetadata, {
+  const originalImageInfo = await assetCore.getAsset(imageId)
+  const resizeRatio = getResizePixelRatio(originalImageInfo.sceneImageMetadata, {
     width: opts.resizeToWidth,
     height: opts.resizeToHeight,
   })
@@ -169,13 +183,15 @@ async function _render(imageId, imageToPlace, opts = {}) {
 
   let blurred = transformed
   const shouldBlur = opts.posterBlur || jsonMetadata.posterBlur
-  const posterBlurAmount = _.isFinite(opts.posterBlur) ? opts.posterBlur : jsonMetadata.posterBlur
-  if (shouldBlur && posterBlurAmount > 0) {
+  const posterBlurSigma = _.isFinite(opts.posterBlur) ? opts.posterBlur : jsonMetadata.posterBlur
+  const calculatedPosterBlurSigma = calculateSharpBlur(posterBlurSigma, resizeRatio)
+  if (shouldBlur && calculateSharpBlur > 0) {
     const blurSource = opts.posterBlur ? 'request options' : 'json metadata'
-    logger.debug(`Blurring poster for ${imageId} with ${posterBlurAmount} from ${blurSource}`)
+    logger.debug(`Blurring poster for ${imageId} with ${posterBlurSigma} from ${blurSource}`)
 
     blurred = await sharp(transformed)
-      .blur(posterBlurAmount * resizeRatio)
+      // Minumum sigma value is 0.3
+      .blur(calculatedPosterBlurSigma)
       .png()
       .toBuffer()
   }

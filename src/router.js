@@ -41,7 +41,8 @@ function createRouter() {
     query: {
       resizeToWidth: Joi.number().min(50).optional(),
       resizeToHeight: Joi.number().min(50).optional(),
-      posterBlur: Joi.number().min(0).max(1000).optional(),
+      // We scale the value to sharp's sigma range which is 0.3 - 1000
+      posterBlur: Joi.number().min(0).max(999.7).optional(),
       variableBlur: Joi.number().min(0).max(100).optional(),
       onlyPosterLayer: Joi.boolean().optional(),
       clearCache: Joi.boolean().optional(),
@@ -54,7 +55,7 @@ function createRouter() {
     query: {
       resizeToWidth: Joi.number().min(50).optional(),
       resizeToHeight: Joi.number().min(50).optional(),
-      posterBlur: Joi.number().min(0).max(1000).optional(),
+      posterBlur: Joi.number().min(0).max(999.7).optional(),
       variableBlur: Joi.number().min(0).max(100).optional(),
       url: Joi.string(),
       onlyPosterLayer: Joi.boolean().optional(),
