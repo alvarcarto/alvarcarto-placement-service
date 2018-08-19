@@ -14,7 +14,7 @@ BPromise.promisifyAll(fs)
 function assertPosterBlur(posterBlur) {
   const val = Number(posterBlur)
   if (val === 0) {
-    return posterBlur
+    return val
   } else if (val < 0.3 || val > 1000) {
     ex.throwStatus(400, 'posterBlur sigma value must be 0 (disabled) or between 0.3 and 1000. See http://sharp.pixelplumbing.com/en/stable/')
   }

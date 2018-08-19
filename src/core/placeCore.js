@@ -185,7 +185,7 @@ async function _render(imageId, imageToPlace, opts = {}) {
   const shouldBlur = opts.posterBlur || jsonMetadata.posterBlur
   const posterBlurSigma = _.isFinite(opts.posterBlur) ? opts.posterBlur : jsonMetadata.posterBlur
   const calculatedPosterBlurSigma = calculateSharpBlur(posterBlurSigma, resizeRatio)
-  if (shouldBlur && calculateSharpBlur > 0) {
+  if (shouldBlur && calculatedPosterBlurSigma > 0) {
     const blurSource = opts.posterBlur ? 'request options' : 'json metadata'
     logger.debug(`Blurring poster for ${imageId} with ${posterBlurSigma} from ${blurSource}`)
 
