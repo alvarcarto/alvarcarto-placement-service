@@ -39,6 +39,7 @@
     "eslint": "^4.19.1",
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-plugin-import": "^2.12.0",
+    "geolib": "^2.0.24",
     "js-combinatorics": "^0.5.3",
     "mocha": "^5.2.0",
     "nodemon": "^1.17.5",

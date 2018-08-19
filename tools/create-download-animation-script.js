@@ -1,8 +1,11 @@
 const _ = require('lodash')
 const fs = require('fs')
+const geolib = require('geolib')
 const queryString = require('query-string')
 
-function calculateSteps(startCoord, endCoord, splits = 300) {
+const STEPS = process.argv[4] ? Number(process.argv[4]) : 300
+
+function calculateSteps(startCoord, endCoord, splits = STEPS) {
   const latDiff = endCoord.lat - startCoord.lat
   const lngDiff = endCoord.lng - startCoord.lng
   return _.map(_.range(splits + 1), (i) => {
@@ -11,6 +14,29 @@ function calculateSteps(startCoord, endCoord, splits = 300) {
       lng: startCoord.lng + (i * (lngDiff / splits)),
     }
   })
+}
+
+function getCenter(sw, ne) {
+  const center = geolib.getCenter([
+    { latitude: ne.lat, longitude: ne.lng },
+    { latitude: sw.lat, longitude: sw.lng },
+  ])
+
+  return { lat: center.latitude, lng: center.longitude }
+}
+
+function coordToPrettyText(coord) {
+  const first = {
+    val: Math.abs(coord.lat).toFixed(3),
+    label: coord.lat > 0 ? 'N' : 'S',
+  }
+
+  const second = {
+    val: Math.abs(coord.lng).toFixed(3),
+    label: coord.lng > 0 ? 'E' : 'W',
+  }
+
+  return `${first.val}°${first.label} / ${second.val}°${second.label}`
 }
 
 function readJsonFile(filePath) {
@@ -71,6 +97,7 @@ async function main() {
       swLng: swStep.lng,
       neLat: neStep.lat,
       neLng: neStep.lng,
+      labelText: coordToPrettyText(getCenter(swStep, neStep)),
     })
     const query = queryString.stringify(queryParams)
     console.log(`curl -H"x-api-key: $API_KEY" -o ${index}.jpg 'https://tile-api.alvarcarto.com/placement/api/place-map/${placementId}?${query}'`)
