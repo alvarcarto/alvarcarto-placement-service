@@ -236,9 +236,10 @@ async function getAsset(imageId, opts = {}) {
     }
   }
 
+  const resizeWidth = originalAssetDescription.instructions.crop ? 2000 : 1200
   const assetInfo = {
     original: originalAssetDescription,
-    resizedImages: await BPromise.map([1200], width => createResizeAssetDescription(
+    resizedImages: await BPromise.map([resizeWidth], width => createResizeAssetDescription(
       originalAssetDescription,
       { width, height: null },
     )),
