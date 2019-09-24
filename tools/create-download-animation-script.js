@@ -103,6 +103,8 @@ async function main() {
     console.log(`curl -H"x-api-key: $API_KEY" -o ${index}.jpg 'https://tile-api.alvarcarto.com/placement/api/place-map/${placementId}?${query}'`)
   })
 
+  console.log('ffmpeg -framerate 15 -pattern_type glob -i \'*.jpg\' -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p output.mp4')
+
   console.error(`\n\nGenerated ${southWestSteps.length} frames`)
 }
 
