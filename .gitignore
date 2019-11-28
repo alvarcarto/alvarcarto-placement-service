@@ -1,5 +1,8 @@
 # Custom ignores
 
+images/*
+!images/.gitkeep
+
 .tmp
 .DS_Store
 .vscode

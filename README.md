@@ -12,6 +12,57 @@
 1. `npm start`
 
 
+## Workflow for new placement images
+
+1. Find a stock photo which has a poster with one of the aspect ratios we also sell.
+
+    30x40cm, 12x18inch etc. To find out if aspect ratio is the same, take a physical ruler or
+    digitally measure the poster dimensions in the stock photo. Divide width with height, e.g.
+    `3.5 / 5 = 0.7`. This would be an exact match with our 70x100cm aspect ratio.
+
+2. Edit the stock photo
+
+    * Remove the existing poster from the image
+    * Create and edit a transparent layer on top of where the poster will be placed
+
+        This layer should adjust brightness, add inner shadows, noise, etc to make the map
+        underneath look real.
+
+    Good example is https://alvarcarto-placement-assets.s3-eu-west-1.amazonaws.com/images/white-bedroom.psd.
+
+3. Figure an id for the image, for example `white-bedroom`
+
+4. Create metadata json
+
+    Good basic example is:
+
+    ```json
+    {
+      "label": "White bedroom",
+      "posterBlur": 0.5,
+      "posterSize": "24x36inch",
+      "posterOrientation": "portrait"
+    }
+    ```
+
+    The json also supports `"variableBlur": 7` which will affect the `-blur-layer.png` blur amount.
+    See `aarnes-home-table` to see an example of variable blur applied.
+
+4. Export assets to ./images in the repo root
+
+    Necessary assets are:
+
+    * `white-bedroom.json` Contains metadata for placement
+    * `white-bedroom.png` Contains the background (and transparent adjustment layer on top of poster)
+    * `white-bedroom-guide-layer.png` Contains red dots to guide where map will be placed and green dots for a possible crop.
+
+    Optional assets are:
+
+    * `white-bedroom-blur-layer.png` Which can be used for gradiental blurs
+
+5. Open local placement url and start iterating
+
+    http://localhost:4000/api/place-map/white-bedroom?swLat=60.029&swLng=24.6974&neLat=60.380&neLng=25.203&mapStyle=bw&posterStyle=sans&labelsEnabled=true&labelHeader=Helsinki&labelSmallHeader=Finland&labelText=60.205%C2%B0N%20%2F%2024.950%C2%B0E
 
 ### Testing convert commands
 
