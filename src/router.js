@@ -26,7 +26,7 @@ function createRouter() {
   // Simple token authentication
   router.use((req, res, next) => {
     const apiKey = req.headers['x-api-key'] || req.query.apiKey
-    if (_.includes(validTokens, apiKey)) {
+    if (config.ALLOW_ANONYMOUS_ADMIN || _.includes(validTokens, apiKey)) {
       req.user = { role: ROLES.ADMIN }
     } else {
       req.user = { role: ROLES.ANONYMOUS }

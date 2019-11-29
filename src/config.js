@@ -19,6 +19,7 @@ const config = {
   // Optional
   PORT: getOptionalEnv('PORT', number, 4000),
   NODE_ENV: getOptionalEnv('NODE_ENV', string, 'development'),
+  ALLOW_ANONYMOUS_ADMIN: getOptionalEnv('ALLOW_ANONYMOUS_ADMIN', boolean, false),
   LOG_LEVEL: getOptionalEnv('LOG_LEVEL', string, 'info'),
   AWS_DEBUG: getOptionalEnv('AWS_DEBUG', boolean, false),
   AWS_REGION: getOptionalEnv('AWS_REGION', string, 'eu-west-1'),
