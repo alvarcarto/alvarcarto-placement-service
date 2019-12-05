@@ -215,14 +215,29 @@ async function _render(imageId, imageToPlace, opts = {}) {
     }
   }
 
-  const renderedImage = await sharp(blurred)
-    .overlayWith(imageInfo.sceneImage, {
-      top: 0,
-      left: 0,
-      gravity: sharp.gravity.northwest,
-    })
-    .png()
-    .toBuffer()
+  let renderedImage
+  if (imageInfo.jsonMetadata.type === 'plywood') {
+    renderedImage = await sharp(imageInfo.sceneImage)
+      .composite([{
+        input: blurred,
+        blend: 'multiply',
+        top: 0,
+        left: 0,
+        gravity: sharp.gravity.northwest,
+      }])
+      .png()
+      .toBuffer()
+  } else {
+    renderedImage = await sharp(blurred)
+      .composite([{
+        input: imageInfo.sceneImage,
+        top: 0,
+        left: 0,
+        gravity: sharp.gravity.northwest,
+      }])
+      .png()
+      .toBuffer()
+  }
 
   let variableBlurredImage = renderedImage
   const variableBlurSigma = _.isFinite(opts.variableBlur)
