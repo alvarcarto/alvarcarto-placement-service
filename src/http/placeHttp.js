@@ -96,11 +96,15 @@ const getPlaceMap = ex.createRoute(async (req, res) => {
     minWidth: Number(req.query.resizeToHeight),
     minHeight: Number(req.query.resizeToWidth),
   })
+
   const getPosterOpts = _.merge({}, req.query, {
     resizeToWidth: assetInfo.sceneImageMetadata.width,
     resizeToHeight: assetInfo.sceneImageMetadata.height,
     size: req.query.size || assetInfo.jsonMetadata.posterSize || '50x70cm',
-    orientation: req.query.orientation || assetInfo.jsonMetadata.posterOrientation || 'portrait'
+    orientation: req.query.orientation || assetInfo.jsonMetadata.posterOrientation || 'portrait',
+    // Use tile renderer for placement when resize parameter is defined
+    // This is mandatory when rendering world maps (low zoom level tiles are cached)
+    useTileRender: resizeDefined,
   })
   logger.debug('Downloading poster with options', getPosterOpts)
 
