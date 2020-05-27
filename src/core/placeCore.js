@@ -85,7 +85,10 @@ function deleteTempFile(fileName) {
 async function createTempFile(data, ext) {
   const extString = ext ? `.${ext}` : ''
   const filePath = path.join(TEMP_DIR, `${uuidv4()}${extString}`)
-  await fs.writeFileAsync(filePath, data, { encoding: null })
+  if (data) {
+    await fs.writeFileAsync(filePath, data, { encoding: null })
+  }
+
   return filePath
 }
 
@@ -119,6 +122,76 @@ async function applyVariableBlur(image, blurImage, _opts = {}) {
   return gmToBuffer(data)
 }
 
+async function generateNoise(width, height, opacity = 0.1) {
+  const im = gm(width, height, '#999999')
+    .out('+noise', 'poisson')
+    .out('-channel', 'green')
+    .out('-separate')
+    .setFormat('PNG24')
+
+  const noiseIm = await gmToBuffer(im)
+
+  const noiseWithAlpha = await sharp(noiseIm)
+    .composite([{
+      input: Buffer.from([255, 255, 255, opacity * 255]),
+      raw: {
+        width: 1,
+        height: 1,
+        channels: 4
+      },
+      tile: true,
+      blend: 'dest-in'
+    }])
+    .png()
+    .toBuffer()
+
+  return noiseWithAlpha
+}
+
+async function addNoise(image, _opts = {}) {
+  const opts = _.merge({
+    opacity: 0.1,
+  }, _opts)
+
+  const metadata = await sharp(image).metadata()
+  const noise = await generateNoise(metadata.width, metadata.height, opts.opacity)
+
+  const final = await sharp(image)
+    .composite([{
+      input: noise,
+      top: 0,
+      left: 0,
+      gravity: sharp.gravity.northwest,
+    }])
+    .png()
+    .toBuffer()
+
+  return final
+}
+
+async function addHintOfColor(image, rgb, _opts = {}) {
+  const opts = _.merge({
+    opacity: 0.1,
+  }, _opts)
+
+  const [r, g, b] = rgb
+
+  const colorized = await sharp(image)
+    .composite([{
+      input: Buffer.from([r, g, b, opts.opacity * 255]),
+      raw: {
+        width: 1,
+        height: 1,
+        channels: 4
+      },
+      tile: true,
+      blend: 'over'
+    }])
+    .png()
+    .toBuffer()
+
+  return colorized
+}
 
 function getResizePixelRatio(oldDimensions, newDimensions) {
   const oldPixels = oldDimensions.width * oldDimensions.height
@@ -283,6 +356,60 @@ function getFormatOptions(format) {
   }
 }
 
+async function renderImperfect(posterImage, _opts) {
+  const opts = _.merge({
+    format: 'jpg',
+    noiseOpacity: 0.1,
+    addColor: null,
+    addColorOpacity: 0.1,
+  }, _opts)
+
+  logger.info(`Rendering imperfect map with options ${JSON.stringify(opts, null, 2)}`)
+
+  const posterMeta = await sharp(posterImage).metadata()
+  const resizeRatio = getResizePixelRatio(posterMeta, {
+    width: opts.resizeToWidth,
+    height: opts.resizeToHeight,
+  })
+  logger.debug(`Resize ratio is ${resizeRatio}`)
+
+  let imperfectImage = posterImage
+
+  const posterBlurSigma = _.isFinite(opts.posterBlur) ? opts.posterBlur : 0.3
+  const calculatedPosterBlurSigma = calculateSharpBlur(posterBlurSigma, resizeRatio)
+  if (calculatedPosterBlurSigma > 0) {
+    logger.debug(`Blurring poster with ${posterBlurSigma}`)
+
+    imperfectImage = await sharp(imperfectImage)
+      // Minumum sigma value is 0.3
+      .blur(calculatedPosterBlurSigma)
+      .png()
+      .toBuffer()
+  }
+
+  logger.debug(`Adding noise with opacity ${opts.noiseOpacity}`)
+  imperfectImage = await addNoise(imperfectImage, opts.noiseOpacity)
+  if (opts.addColor) {
+    logger.debug(`Adding color overlay with opacity ${opts.addColorOpacity}`)
+    imperfectImage = await addHintOfColor(imperfectImage, opts.addColor.value, {
+      opacity: opts.addColorOpacity,
+    })
+  }
+
+  logger.debug(`Rendered image with resolution ${posterMeta.width}x${posterMeta.height}`)
+
+  const resizedImage = await _resize(imperfectImage, opts)
+  const metadata = await getImageMetadata(resizedImage)
+
+  return {
+    imageData: await sharp(resizedImage)
+      .toFormat(opts.format, getFormatOptions(opts.format))
+      .toBuffer(),
+    metadata,
+    mimeType: formatToMimeType(opts.format),
+  }
+}
+
 async function render(imageId, imageToPlace, _opts) {
   const opts = _.merge({
     highQuality: false,
@@ -332,5 +459,6 @@ async function getMetadata(imageId, opts = {}) {
 
 module.exports = {
   render,
+  renderImperfect,
   getMetadata,
 }

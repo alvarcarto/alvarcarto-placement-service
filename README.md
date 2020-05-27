@@ -66,6 +66,8 @@
 
 ### Testing convert commands
 
+To see what convert commands gm is outputting, run `DEBUG=gm npm start`
+
 ```
 cd root
 convert test2.png -matte -virtual-pixel Edge -affine "0.6027402178,-0.0028657441,360,0.0028024744,0.5621156971,149,0.0000360925,-0.0000079604,1" -transform new.png

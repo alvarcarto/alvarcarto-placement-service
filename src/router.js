@@ -51,6 +51,23 @@ function createRouter() {
   }
   router.get('/api/place-map/:imageId', validate(placeMapSchema), place.getPlaceMap)
 
+  const renderImperfectMapSchema = {
+    query: {
+      resizeToWidth: Joi.number().min(50).optional(),
+      resizeToHeight: Joi.number().min(50).optional(),
+      resizeToMax: Joi.number().min(50).optional(),
+      // We scale the value to sharp's sigma range which is 0.3 - 1000
+      posterBlur: Joi.number().min(0).max(999.7).optional(),
+      addColor: Joi.string().optional(),
+      addColorOpacity: Joi.number().min(0).max(1).optional(),
+      addColorBlendMode: Joi.string().optional(),
+      noiseOpacity: Joi.number().min(0).max(1).optional(),
+      clearCache: Joi.boolean().optional(),
+      format: Joi.string().valid(['png', 'jpg', 'webp']).optional(),
+    },
+  }
+  router.get('/api/render-imperfect-map', validate(renderImperfectMapSchema), place.getImperfectMap)
+
   const placeUrlSchema = {
     query: {
       resizeToWidth: Joi.number().min(50).optional(),
